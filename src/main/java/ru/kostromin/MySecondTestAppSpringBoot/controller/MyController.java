@@ -1,6 +1,7 @@
 package ru.kostromin.MySecondTestAppSpringBoot.controller;
 
 import jakarta.validation.Valid;
+import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import ru.kostromin.MySecondTestAppSpringBoot.model.Response;
 import ru.kostromin.MySecondTestAppSpringBoot.service.ModifyRequestService;
 import ru.kostromin.MySecondTestAppSpringBoot.service.ModifyResponseService;
 import ru.kostromin.MySecondTestAppSpringBoot.service.ValidationService;
+import ru.kostromin.MySecondTestAppSpringBoot.util.DateTimeUtil;
 
 @Slf4j
 @RestController
@@ -28,15 +30,21 @@ public class MyController {
 
   private final ModifyResponseService modifyResponseService;
 
-  private final ModifyRequestService modifyRequestService;
+  private final ModifyRequestService modifySystemNameRequestService;
+
+  private final ModifyRequestService modifySourceRequestService;
 
   public MyController(ValidationService validationService,
       @Qualifier("modifySystemTimeResponseService") ModifyResponseService modifyResponseService,
-      ModifyRequestService modifyRequestService) {
+      @Qualifier("modifySystemNameRequestService")
+      ModifyRequestService modifySystemNameRequestService,
+      @Qualifier("modifySourceRequestService")
+      ModifyRequestService modifySourceRequestService) {
 
     this.validationService = validationService;
     this.modifyResponseService = modifyResponseService;
-    this.modifyRequestService = modifyRequestService;
+    this.modifySystemNameRequestService = modifySystemNameRequestService;
+    this.modifySourceRequestService = modifySourceRequestService;
   }
 
   @PostMapping(value = "/feedback")
@@ -44,6 +52,9 @@ public class MyController {
       @Valid @RequestBody Request request, BindingResult bindingResult) {
 
     log.info("request: {}", request);
+
+    log.info("Обновление поля systemTime для расчета разницы времени между запросами");
+    request.setSystemTime(DateTimeUtil.getCustomFormat().format(new Date()));
 
     Response response = Response.builder()
         .uid(request.getUid())
@@ -70,7 +81,8 @@ public class MyController {
     }
 
     modifyResponseService.modify(response);
-    modifyRequestService.modify(request);
+    modifySystemNameRequestService.modify(request);
+    modifySourceRequestService.modify(request);
 
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
