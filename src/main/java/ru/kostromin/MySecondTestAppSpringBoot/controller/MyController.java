@@ -1,15 +1,11 @@
 package ru.kostromin.MySecondTestAppSpringBoot.controller;
 
 import jakarta.validation.Valid;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,15 +16,28 @@ import ru.kostromin.MySecondTestAppSpringBoot.model.ErrorCodes;
 import ru.kostromin.MySecondTestAppSpringBoot.model.ErrorMessages;
 import ru.kostromin.MySecondTestAppSpringBoot.model.Request;
 import ru.kostromin.MySecondTestAppSpringBoot.model.Response;
+import ru.kostromin.MySecondTestAppSpringBoot.service.ModifyRequestService;
+import ru.kostromin.MySecondTestAppSpringBoot.service.ModifyResponseService;
 import ru.kostromin.MySecondTestAppSpringBoot.service.ValidationService;
-import ru.kostromin.MySecondTestAppSpringBoot.util.DateTimeUtil;
 
 @Slf4j
 @RestController
-@AllArgsConstructor
 public class MyController {
 
   private final ValidationService validationService;
+
+  private final ModifyResponseService modifyResponseService;
+
+  private final ModifyRequestService modifyRequestService;
+
+  public MyController(ValidationService validationService,
+      @Qualifier("modifySystemTimeResponseService") ModifyResponseService modifyResponseService,
+      ModifyRequestService modifyRequestService) {
+
+    this.validationService = validationService;
+    this.modifyResponseService = modifyResponseService;
+    this.modifyRequestService = modifyRequestService;
+  }
 
   @PostMapping(value = "/feedback")
   public ResponseEntity<Response> feedback(
@@ -39,7 +48,6 @@ public class MyController {
     Response response = Response.builder()
         .uid(request.getUid())
         .operationUid(request.getOperationUid())
-        .systemTime(DateTimeUtil.getCustomFormat().format(new Date()))
         .code(Codes.SUCCESS)
         .errorCode(ErrorCodes.EMPTY)
         .errorMessage(ErrorMessages.EMPTY)
@@ -60,6 +68,9 @@ public class MyController {
       response.setErrorMessage(ErrorMessages.UNKNOWN);
       return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    modifyResponseService.modify(response);
+    modifyRequestService.modify(request);
 
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
