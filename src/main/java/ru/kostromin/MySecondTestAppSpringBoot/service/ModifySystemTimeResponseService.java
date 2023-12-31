@@ -2,10 +2,12 @@ package ru.kostromin.MySecondTestAppSpringBoot.service;
 
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import ru.kostromin.MySecondTestAppSpringBoot.model.Response;
 import ru.kostromin.MySecondTestAppSpringBoot.util.DateTimeUtil;
 
 @Slf4j
+@Service
 public class ModifySystemTimeResponseService implements ModifyResponseService {
 
   @Override
